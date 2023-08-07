@@ -1,0 +1,25 @@
+
+{
+    "fresh_severity": "Clear",
+    "fresh_subject": "Datto RMM | [device_hostname] | [alert_type]",
+    "fresh_description_text": "Datto RMM has logged the following alert: \n Device: [device_hostname] \n Type: [alert_type] \n Category: [alert_category] \n [alert_message] \n \n",
+    "fresh_description_html": "Datto RMM has logged the following alert: <br /> <strong>Device:</strong> [device_hostname] <br /> <strong>Device OS:</strong> [device_os] <br /> <strong>Device IP:</strong> [device_ip] <br/ > <strong>Alert Type:</strong> [alert_type] <br /> <strong>Alert Category:</strong> [alert_category] <br /> [alert_message] <br /> <strong>Device URL:</strong> https://[platform]rmm.centrastage.net/device/[device_id]/ <br /> <strong>Alert URL:</strong> https://[platform]rmm.centrastage.net/device/[device_id]/ <br /> <strong>Site URL:</strong> site_url: https://[platform]rmm.centrastage.net/site/[site_id]/",
+
+    "drmm_device_id": "[device_id]",
+    "drmm_device_hostname": "[device_hostname]",
+    "drmm_device_os": "[device_os]",
+    "drmm_device_ip": "[device_ip]",
+    "drmm_site": "[site_name]",
+    "drmm_site_id": "[site_id]",
+    "drmm_site_uid": "[site_uid]",
+    "drmm_alert": "[alert]",
+    "drmm_alert_type": "[alert_type]",
+    "drmm_alert_category": "[alert_category]",
+    "drmm_alert_message": "[alert_message]",
+    "drmm_alert_uid": "[alert_uid]",
+    "drmm_platform": "Datto RMM",
+
+    "drmm_alert_url": "https://[platform]rmm.centrastage.net/alert/[alert_uid]/",
+    "drmm_device_url": "https://[platform]rmm.centrastage.net/device/[device_id]/",
+    "drmm_site_url": "https://[platform]rmm.centrastage.net/site/[site_id]/"
+}
