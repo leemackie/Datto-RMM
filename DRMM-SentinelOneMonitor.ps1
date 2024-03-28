@@ -1,6 +1,6 @@
 # Improved SentinelOne monitor for Datto RMM
 # Written by Lee Mackie - 5G Networks
-# Version 0.2 - Upated 21/12/22 - Improved script logic
+# Version 0.2 - Updated 21/12/22 - Improved script logic
 # Setup component to execute installation on failure
 
 function Get-SentinelOneInstalled {
