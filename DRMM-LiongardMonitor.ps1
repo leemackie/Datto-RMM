@@ -10,9 +10,9 @@ function write-DRMMStatus ($message) {
     write-host '<-End Result->'
 }
 function write-DRMMDiagnostic ($message) {
-    write-host '<-Start Diagnostic>'
+    write-host '<-Start Diagnostic->'
     write-host $message
-    write-host '<-End Diagnostic>'
+    write-host '<-End Diagnostic->'
 }
 
 # Define the name of the Liongard agent service
@@ -24,11 +24,12 @@ if ((Get-Service -Name $serviceName).Status -eq 'Running') {
 } else {
     # Attempt to start the service
     try {
-        Start-Service -Name $serviceName -ErrorAction Stop
+        Start-Service -Name $serviceName
         Write-DRMMStatus "Service $serviceName started successfully."
     } catch {
         $errorMessage = $_.Exception.Message
         Write-DRMMAlert "Failed to start service $serviceName."
         Write-DRMMDiagnostic "Error message: $errorMessage."
+        Exit 1
     }
 }

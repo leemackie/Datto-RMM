@@ -10,38 +10,37 @@ function Write-DRMMStatus ($message) {
     write-host '<-End Result->'
 }
 
+function Write-DRMMDiagnostic ($messages) {
+    write-host '<-Start Diagnostic->'
+    foreach ($Message in $Messages) { $Message }
+    write-host '<-End Diagnostic->'
+}
+
+$version = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").CurrentVersion
+if ($Version -lt "6.3") {
+    write-DRMMAlert "Unsupported OS. Only Server 2012R2 and up are supported - exclude this server from the monitor."
+    exit 1
+}
+
 # Import the Hyper-V module
 Import-Module Hyper-V
 
-# Set the threshold for snapshot age in days
-$Threshold = $env:SnapshotAge
-
 # Get all VMs on the host
-$VMs = Get-VM
-$SnapshotVms = @()
+$snapshots = Get-VM | Get-VMSnapshot | Where-Object { $_.CreationTime -lt (Get-Date).AddDays(-$env:SnapshotAge) -and $_.snapshottype -ne "Replica" -and $_.Name -notlike "Veeam Replica" }
 
 # Iterate through the VMs
-foreach ($VM in $VMs) {
-    # Get all snapshots for the VM
-    $Snapshots = Get-VMSnapshot -VMName $VM.Name
-
-    # Iterate through the snapshots
-    foreach ($Snapshot in $Snapshots) {
-        # Calculate the age of the snapshot
-        $Age = (Get-Date) - $Snapshot.CreationTime
-
-        # Check if the snapshot is older than the threshold
-        if ($Age.Days -gt $Threshold) {
-            # Write the VM name and snapshot name to the console
-            Write-Host "VM: $($VM.Name) Snapshot: $($Snapshot.Name) is older than $Threshold days"
-            $SnapshotVms += $Vm.Name
-        }
+$SnapshotState = foreach ($Snapshot in $snapshots) {
+    [PSCustomObject]@{
+        VMName          = $snapshot.vmname
+        'Creation Date' = $snapshot.CreationTime
+        Snapshotname    = $snapshot.Name
     }
 }
 
-
-if ($SnapshotVms.Count -eq 0) {
+if (!$SnapshotState) {
     Write-DRMMStatus "No aged snaphots found"
 } else {
-    Write-DRMMAlert "Found aged snapshots:  $($SnapshotVms -join ', ')"
+    Write-DRMMAlert "Found aged snapshots: $($SnapshotState.VMName -join ', ')"
+    Write-DRMMDiagnostic ($SnapshotState | fl)
+    Exit 1
 }

@@ -110,6 +110,6 @@ ForEach($Task in $Tasks) {
 If($Failure) {
     Write-DRMMAlert $Results
     Exit 1
-} else {
-    Write-DRMMStatus $Results
 }
+
+Write-DRMMStatus $Results
