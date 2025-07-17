@@ -7,6 +7,17 @@ function Write-DRMMAlert ($message) {
     write-host "Alert=$message"
     write-host '<-End Result->'
 }
+function Write-DRMMStatus ($message) {
+    write-host '<-Start Result->'
+    write-host "STATUS=$message"
+    write-host '<-End Result->'
+}
+
+function Write-DRMMDiagnostic ($message) {
+    write-host '<-Start Result->'
+    write-host "STATUS=$message"
+    write-host '<-End Result->'
+}
 
 $maxQueueLength = $env:maxQueueLength # Max Message Queue Length
 
@@ -16,10 +27,9 @@ Add-PSSnapin Microsoft.Exchange.Management.PowerShell.E2010 -ErrorAction Silentl
 $queueLength = Get-ExchangeServer | Where-Object { $_.IsHubTransportServer -eq $true } | Get-Queue | ForEach-Object -Begin { $messageCountTotal = 0 } -Process { $messageCountTotal += $_.MessageCount } -End { $messageCountTotal }
 
 If ( $queueLength -gt $maxQueueLength ) {
-    Write-DRMMAlert "Message queue length ($queueLength) is greater than maximum message queue length ($maxQueueLength)"
-
-    Write-Host '<-Start Diagnostic->'
-    Get-ExchangeServer | Where-Object { $_.IsHubTransportServer -eq $true } | Get-Queue | Get-Message | Select-Object FromAddress,Queue,Subject
-    Write-Host '<-End Diagnostic->'
+    Write-DRMMAlert "BAD: Queue length > $maxQueueLength [$queueLength]"
+    Write-DRMMDiagnostic (Get-ExchangeServer | Where-Object { $_.IsHubTransportServer -eq $true } | Get-Queue | Get-Message | Select-Object FromAddress,Queue,Subject)
     Exit 1
+} else {
+    Write-DRMMStatus "OK: Message queue length [$queueLength]"
 }

@@ -40,62 +40,69 @@ $i = 0
 $misconfigured = @()
 
 # Grab all VM backup jobs
-$vbrJobs = Get-VBRJob
+try {
+    Connect-VBRServer -Server localhost
+    $vbrJobs = Get-VBRJob
 
-# Iterate through them
-foreach ($job in $vbrJobs) {
-    try {
-        if (($job.JobType -eq "Backup" -or $job.JobType -eq "Replica") -and $job.VssOptions.AreWinCredsSet -eq $false -and $job.IsScheduleEnabled -eq $true) {
-            # If backup or replica job and credentials are not configured
-            $misconfigured += "$($job.Name)`n"
-        } elseif (($job.JobType -eq "Backup" -or $job.JobType -eq "Replica") -and $job.VssOptions.WinGuestFSIndexingOptions.Enabled -eq $false -and $job.IsScheduleEnabled -eq $true) {
-            # If backup or replica job, Guest indexing is disabled and guest credentials are configured
-            Enable-VBRJobGuestFSIndexing -Job $job
-            $u++
-        }  else {
-            # Else everything is setup as expected or job is disabled
-            $i++
+    # Iterate through them
+    foreach ($job in $vbrJobs) {
+        try {
+            if (($job.JobType -eq "Backup" -or $job.JobType -eq "Replica") -and $job.VssOptions.AreWinCredsSet -eq $false -and $job.IsScheduleEnabled -eq $true) {
+                # If backup or replica job and credentials are not configured
+                $misconfigured += "$($job.Name)`n"
+            } elseif (($job.JobType -eq "Backup" -or $job.JobType -eq "Replica") -and $job.VssOptions.WinGuestFSIndexingOptions.Enabled -eq $false -and $job.IsScheduleEnabled -eq $true) {
+                # If backup or replica job, Guest indexing is disabled and guest credentials are configured
+                Enable-VBRJobGuestFSIndexing -Job $job
+                $u++
+            }  else {
+                # Else everything is setup as expected or job is disabled
+                $i++
+            }
+        } catch {
+            Write-DRMMAlert "BAD | Failed to update $($Job.Name) to enable guest file indexing"
+            Write-DRMMDiagnostic "$($_.ScriptStackTrace)`n$($_.Exception)"
+            Exit 1
         }
-    } catch {
-        Write-DRMMAlert "BAD | Failed to update $($Job.Name) to enable guest file indexing"
-        Write-DRMMDiagnostic "$($_.ScriptStackTrace)`n$($_.Exception)"
+    }
+
+    # Grab all Agent backup jobs, but only if they are managed by the Backup server
+    $computerJobs = Get-VBRComputerBackupJob -Mode ManagedByBackupServer
+
+    # Iterate through them
+    foreach ($cJob in $computerJobs) {
+        try {
+            if ($cjob.IndexingEnabled -eq $false -and $cJob.IsScheduleEnabled -eq $true) {
+                # If indexing is disabled in job properties
+                Enable-VBRJobGuestFSIndexing -Job $job
+                $u++
+            } else {
+                # else everything configure correctly or job is disabled
+                $i++
+            }
+        } catch {
+            Write-DRMMAlert "BAD | Failed to update $($cJob.Name) to enable guest file indexing"
+            Write-DRMMDiagnostic "$($_.ScriptStackTrace)`n$($_.Exception)"
+            Exit 1
+        }
+    }
+
+    # Generate DRMM alert for misconfigured job
+    if ($misconfigured.Count -ne 0) {
+        Write-DRMMAlert "BAD | Misconfigured jobs found"
+        Write-DRMMDiagnostic "Misconfigured jobs (likely credentials not configured in job properties):`n$misconfigured`nThese will require manual resolution"
         Exit 1
     }
-}
 
-# Grab all Agent backup jobs, but only if they are managed by the Backup server
-$computerJobs = Get-VBRComputerBackupJob -Mode ManagedByBackupServer
+    # Final count of all found backup jobs for a nice output to console
+    $count = $vbrJobs.Count + $computerJobs.Count
 
-# Iterate through them
-foreach ($cJob in $computerJobs) {
-    try {
-        if ($cjob.IndexingEnabled -eq $false -and $cJob.IsScheduleEnabled -eq $true) {
-            # If indexing is disabled in job properties
-            Enable-VBRJobGuestFSIndexing -Job $job
-            $u++
-        } else {
-            # else everything configure correctly or job is disabled
-            $i++
-        }
-    } catch {
-        Write-DRMMAlert "BAD | Failed to update $($cJob.Name) to enable guest file indexing"
-        Write-DRMMDiagnostic "$($_.ScriptStackTrace)`n$($_.Exception)"
-        Exit 1
+    if ($count -ne 0) {
+        Write-DRMMStatus "OK | $count jobs | $u updated | $i OK"
+    } else {
+        Write-DRMMStatus "OK | No backup jobs found"
     }
-}
-
-# Generate DRMM alert for misconfigured job
-if ($misconfigured.Count -ne 0) {
-    Write-DRMMAlert "BAD | Misconfigured jobs found"
-    Write-DRMMDiagnostic "Misconfigured jobs (likely credentials not configured in job properties):`n$misconfigured`nThese will require manual resolution"
+} catch {
+    write-DRMMAlert "$(Get-Date -Format HH:mm) | SCRIPT FAILED"
+    Write-DRMMDiagnostic "Script failed - please investigate VBR and PowerShell on server."
     Exit 1
-}
-
-# Final count of all found backup jobs for a nice output to console
-$count = $vbrJobs.Count + $computerJobs.Count
-
-if ($count -ne 0) {
-    Write-DRMMStatus "OK | $count jobs | $u updated | $i OK"
-} else {
-    Write-DRMMStatus "OK | No backup jobs found"
 }

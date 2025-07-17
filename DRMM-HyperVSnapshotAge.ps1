@@ -26,7 +26,7 @@ if ($Version -lt "6.3") {
 Import-Module Hyper-V
 
 # Get all VMs on the host
-$snapshots = Get-VM | Get-VMSnapshot | Where-Object { $_.CreationTime -lt (Get-Date).AddDays(-$env:SnapshotAge) -and $_.snapshottype -ne "Replica" -and $_.Name -notlike "Veeam Replica" }
+$snapshots = Get-VM | Get-VMSnapshot | Where-Object { $_.CreationTime -lt (Get-Date).AddDays(-$env:SnapshotAge) -and $_.snapshottype -ne "Replica" -and $_.Name -notlike "Veeam Replica*" }
 
 # Iterate through the VMs
 $SnapshotState = foreach ($Snapshot in $snapshots) {

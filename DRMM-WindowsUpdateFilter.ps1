@@ -1,73 +1,70 @@
-Write-Host "### Running Windows Update component"
-Write-Host "# Searching for updates..."
-$filter = $ENV:Filter
-$updateSession = new-object -com "Microsoft.Update.Session"
-$updateSearcher = $updateSession.CreateupdateSearcher()
-$searchResult = $updateSearcher.Search("IsInstalled=0 and isHidden=0")
+$Filter = $ENV:Filter
 
-if ($searchResult.Updates.Count -eq 0) {
-    Write-Host "# WARNING: No outstanding updates on this machine."
+Write-Host "### Running Windows Update with filtering component"
+Write-Host "# Searching for updates..."
+Write-Host "# Filter: $filter"
+
+$Criteria = "IsInstalled=0 and isHidden=0"
+
+$resultcode = @{
+    0 = "Not Started";
+    1 = "In Progress";
+    2 = "Succeeded";
+    3 = "Succeeded With Errors";
+    4 = "Failed" ;
+    5 = "Aborted"
+}
+
+$updateSession = New-Object -com "Microsoft.Update.Session"
+$updatesToDownload = New-Object -com "Microsoft.Update.UpdateColl"
+
+$updates = $updateSession.CreateupdateSearcher().Search($criteria).Updates
+
+if ($Updates.Count -eq 0) {
+    "-- WARNING: There are no outstanding updates."
     Exit 0
 } else {
-    $updatesToDownload = new-object -com "Microsoft.Update.UpdateColl"
-    foreach ($update in $searchResult.Updates) {
+    Write-Host "-- Found $($updates.Count) updates"
+
+    $downloader = $updateSession.CreateUpdateDownloader()
+    $i = 0
+    foreach ($update in $updates) {
         if  ($update.Title -like "*$filter*") {
             Write-Host "-- Adding $($update.Title) for download"
-            $updatesToDownload.Add($update) | out-null
+            $output = $updatesToDownload.Add($update) #| out-null
+            $i++
         }
     }
 
-    if ($null -eq $updatesToDownload) {
-        Write-Host "# FAILED: No updates found according to the $filter filter - run this again with a different filter or investigate further"
+    if ($i -eq 0) {
+        Write-Host "-- WARNING: No updates match the filter $filter"
+        Exit 0
+    } else {
+        Write-Host "-- Total updates queued for download: $i"
+    }
+    try {
+        $downloader.Updates = $updatesToDownload #| Out-Null
+
+        $Result = $downloader.Download()
+    } catch {
+        Write-Host "FAILED: Something went wrong downloading - see error message below."
+        Write-Host $_
         Exit 1
     }
+    #if (($Result.Hresult -eq 0) -or (($result.resultCode -eq 2) -or ($result.resultCode -eq 3)) ) {
+    Write-Host "-- Installing updates"
+        $updatesToInstall = New-object -com "Microsoft.Update.UpdateColl"
+
+        $updatesToDownload | Where-Object {$_.isdownloaded} | foreach-Object {$updatesToInstall.Add($_) | out-null }
+        $installer = $updateSession.CreateUpdateInstaller()
+        $installer.Updates = $updatesToInstall
+
+        $installationResult = $installer.Install()
+        $Global:counter = -1
+        $installer.updates | Format-Table -autosize -property Title, EulaAccepted, @{label = 'Result';
+            expression = {$ResultCode[$installationResult.GetUpdateResult($Global:Counter++).resultCode] }
+        }
+    #}
 }
 
-$i = 0
-Write-Host "- Downloading updates..."
-$downloader = $updateSession.CreateUpdateDownloader()
-$downloader.Updates = $updatesToDownload
-$downloader.Download()
-Write-Host "- List of downloaded updates:"
-$i = 0
-foreach ($update in $updatesToDownload.Updates){
-    $i++
-    if ( $update.IsDownloaded ) {
-        Write-Host $i">" $update.Title "(downloaded)"
-    } else  {
-        Write-Host $i">" $update.Title "(not downloaded)"
-    }
-}
-
-$updatesToInstall = new-object -com "Microsoft.Update.UpdateColl"
-Write-Host "- Creating collection of downloaded updates to install..."
-foreach ($update in $searchResult.Updates){
-    if ( $update.IsDownloaded -and $update.Title -like "*$filter*" ) {
-        $updatesToInstall.Add($update) | out-null
-    }
-}
-
-if ( $updatesToInstall.Count -eq 0 ) {
-    Write-Host "# FAILED: All updates failed to download - please investigate and try again."
-    Exit 1
-} else  {
-    Write-Host "- Installing" $updatesToInstall.Count "updates..."
-    $installer = $updateSession.CreateUpdateInstaller()
-    $installer.Updates = $updatesToInstall
-    $installationResult = $installer.Install()
-    if ( $installationResult.ResultCode -eq 2 ) {
-        Write-Host "# SUCCESS: All updates applied successfully"
-    } else  {
-        Write-Host "# FAILED: Some updates failed to install - please investigate and try again."
-    }
-
-    $installer.updates | Format-Table -autosize -property Title, EulaAccepted, @{label = 'Result';
-    expression = {$ResultCode[$installationResult.GetUpdateResult($Global:Counter++).resultCode] }
-}
-
-    if ( $installationResult.RebootRequired ) {
-        Write-Host "# WARNING: One or more updates require a reboot to complete. Please scheduled a reboot as necessary."
-    } else {
-        Write-Host "# SUCCESS: No reboot required to complete."
-    }
-}
+Write-Host "SUCCESS: Script has completed successfully."

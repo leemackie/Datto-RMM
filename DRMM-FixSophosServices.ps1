@@ -61,7 +61,7 @@ try {
                 Write-Host "## Installing the Sophos AutoUpdate service"
                 $test = Test-Path $sauPathInstaller -ErrorAction SilentlyContinue
                 if ($test) {
-                    msiexec /i ""$sauPathInstaller"" /qn /norestart /L*V ""$LogFileLocation""
+                    &msiexec /i ""$sauPathInstaller"" /qn /norestart /L*V ""$LogFileLocation""
                     Start-Sleep -Seconds 60
                 }
             }

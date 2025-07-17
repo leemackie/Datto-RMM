@@ -58,7 +58,7 @@ Remove-Item "C:\ProgramData\Sophos\Management Communications System\Endpoint\Per
 
 # Execute the installer we downloaded earlier
 Write-Host "# Attempting re-registration using Sophos installation file"
-Write-Host "? This may fail if the machine requires a reboot"
+&Write-Host "? This may fail if the machine requires a reboot"
 Start-Process "C:\ProgramData\CentraStage\Temp\SophosSetup.exe" -ArgumentList "--registeronly --customertoken=$ENV:SophosCustToken --products=none --quiet" -Wait -NoNewWindow
 
 # Start all processes again
