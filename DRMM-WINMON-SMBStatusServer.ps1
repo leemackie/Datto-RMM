@@ -2,7 +2,7 @@
 
 function Write-DRMMStatus ($message) {
     write-host '<-Start Result->'
-    write-host $message
+    write-host "STATUS=$message"
     write-host '<-End Result->'
 }
 

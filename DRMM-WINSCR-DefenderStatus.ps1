@@ -4,7 +4,7 @@ Using Datto RMM, check Windows defender status. Intended to use alongside your t
 and thus not causing any issues.
 https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-compatibility?view=o365-worldwide#antivirus-protection-without-defender-for-endpoint
 
-Either alert or write status dependant on the status.
+Alert if Defender is running, otherwise return OK status.
 Written by Lee Mackie - 5G Networks
 
 .NOTES

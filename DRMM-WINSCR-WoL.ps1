@@ -1,3 +1,13 @@
+<#
+.SYNOPSIS
+Using Datto RMM, attempt to send a Wake-on-LAN packet to a device using its MAC address.
+Written by Lee Mackie - 5G Networks
+
+.NOTES
+Type: Script
+Version 1.1 - Updated header file
+#>
+
 try {
     # Define the MAC address of the target device
     [string]$mac = $env:MacAddress

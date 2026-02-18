@@ -14,7 +14,7 @@ Write-Host "------------------------------------------"
 $tpStatus = & "C:\Program Files\Sophos\Endpoint Defense\SEDcli.exe" -status
 
 if ($tpStatus -contains "SED Tamper Protection is enabled") {
-    Write-Host "!! Tamper protection code not provided but Tamper Protection is turned on - this script will not work."
+    Write-Host "!! Tamper protection code not provided but Tamper Protection is turned on - uninstallation is not possible."
     Exit 1
 }
 

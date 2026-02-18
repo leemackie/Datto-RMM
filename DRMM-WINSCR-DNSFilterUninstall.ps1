@@ -1,8 +1,13 @@
-# DNSFilter Agent uninstallation script
-# Written by Lee Mackie - 5G Networks
-# Version 1.1: Updated uninstallation commands
-# Based off https://help.dnsfilter.com/hc/en-us/community/posts/33824571207955-Migrating-Roaming-Clients-between-organizations-in-DNSFilter
+<#
+.SYNOPSIS
+Using Datto RMM, uninstall the DNSFilter Agent from a Windows device.
+ Based off https://help.dnsfilter.com/hc/en-us/community/posts/33824571207955-Migrating-Roaming-Clients-between-organizations-in-DNSFilter
+Written by Lee Mackie - 5G Networks
 
+.NOTES
+Type: Script
+Version 1.1 - Updated uninstallation commands
+#>
 function Uninstall-App {
     Write-Output "Uninstalling $($args[0])"
     foreach($obj in Get-ChildItem "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall") {
@@ -16,7 +21,7 @@ function Uninstall-App {
                     Write-Output $appid
                     Write-Host "Found $($args[0]) - initiating uninstallation command"
                     start-process "msiexec.exe" -arg "/X $appid /qb" -Wait
-                }ud
+                }
             }
         }
     }

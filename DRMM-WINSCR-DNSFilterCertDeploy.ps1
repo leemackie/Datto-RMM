@@ -4,6 +4,7 @@ Using Datto RMM, deploy the DNSFilter certificates to the Trusted Root CA store
 Written by Lee Mackie - 5G Networks
 
 .NOTES
+Type: Script
 Version 1.2 - Simplified installation code and added verbosity to script
 #>
 

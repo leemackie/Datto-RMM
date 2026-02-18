@@ -31,6 +31,7 @@ if ($Updates.Count -eq 0) {
     foreach ($update in $updates) {
         if  ($update.Title -like "*$filter*") {
             Write-Host "-- Adding $($update.Title) for download"
+            $update.AcceptEula()
             $output = $updatesToDownload.Add($update) #| out-null
             $i++
         }
@@ -58,7 +59,6 @@ if ($Updates.Count -eq 0) {
         $updatesToDownload | Where-Object {$_.isdownloaded} | foreach-Object {$updatesToInstall.Add($_) | out-null }
         $installer = $updateSession.CreateUpdateInstaller()
         $installer.Updates = $updatesToInstall
-
         $installationResult = $installer.Install()
         $Global:counter = -1
         $installer.updates | Format-Table -autosize -property Title, EulaAccepted, @{label = 'Result';

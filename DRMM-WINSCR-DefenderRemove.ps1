@@ -1,9 +1,13 @@
 <#
 .SYNOPSIS
-Using Datto RMM, either install or uninstall Windows Defender feature
+Using Datto RMM, either install or uninstall Windows Defender features on Windows Server systems.
+Depending on the action specified in the 'usrAction' environment variable, this script will either install or remove Windows Defender.
+Intended for use in environments where third-party antivirus solutions are deployed, and Windows Defender needs to be managed accordingly.
+
 Written by Lee Mackie - 5G Networks
 
 .NOTES
+Type: Script
 Version 1.0 - Initial release
 #>
 
