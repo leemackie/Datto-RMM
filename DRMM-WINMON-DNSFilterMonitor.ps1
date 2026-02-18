@@ -6,6 +6,7 @@ Written by Lee Mackie - 5G Networks
 
 .NOTES
 Version 0.2 - Simplified detection logic somewhat and cleaned up output. Added check for registered status.
+Version 1.0 - Finalized for release. Added secondary naming convention for whitelabeled version of agent.
 #>
 function Write-DRMMAlert ($message) {
     write-host '<-Start Result->'
@@ -20,10 +21,10 @@ function Write-DRMMStatus ($message) {
 }
 
 function Get-DNSFilterStatus () {
-    $Global:DNSFilterAgent = Get-Service -name "DNSFilter Agent" -ea SilentlyContinue
+    $Global:DNSFilterAgent = Get-Service -name "DNSFilter Agent","DNS Agent" -ea SilentlyContinue
 }
 
-$Installed = Test-Path "HKLM:\Software\DNSFilter\Agent" -ea SilentlyContinue
+$Installed = Test-Path "HKLM:\Software\DNSFilter\Agent","HKLM:\Software\DNSAgent\Agent" -ea SilentlyContinue
 if ($Installed -eq "true") {
     Write-Host "-- DNSFilter Roaming Client installed"
     Get-DNSFilterStatus
