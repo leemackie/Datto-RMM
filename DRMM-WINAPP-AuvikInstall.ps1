@@ -16,12 +16,11 @@ First revision
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
 
 # Download Auvik Service to %temp%
-
 Write-Output "-- Downloading setup to $env:Temp"
 Invoke-WebRequest -Uri "https://apt.my.auvik.com/native-binaries/latest-release/MinGW-x86_64/AuvikService.exe" -OutFile "$env:Temp\AuvikService.exe"
 
 # Execute the intallation
-if (Get-Item $env:Temp\AuvikService.exe) {
+if (Test-Path $env:Temp\AuvikService.exe) {
     & $env:Temp\AuvikService -install -dir c:\auvik -tenant $env:tenantURL -user $env:userEmail -password $env:apiKey -noprompt
 } else {
     Write-Host "FAILED: Auvik Service has not downloaded - review script output and try again."

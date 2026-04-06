@@ -14,6 +14,8 @@ Can traverse midnight (e.g. 22:00-06:00).
 Version 1.0 - Initial release
 Version 1.1 - Fixed logic to properly count reboot reminders before forcing reboot.
 Version 1.2 - Added optional reboot time schedule check before forcing reboot, added alert output variable.
+Version 1.3 - Added uptime checks to allow for reboot to be based upon uptime of system, added function to remove reboot reminder registry keys and moved to be used in multiple places for cleanup of reboot reminder state.
+Version 1.3.1 - Fixed logic around uptime checks so if a device doesn't need a reboot but exceeds the uptime limit, it will still trigger a reboot
 #>
 
 function Write-DRMMAlert ($message) {
@@ -28,25 +30,49 @@ function Write-DRMMStatus ($message) {
     write-host '<-End Result->'
 }
 
+function Remove-DRMMRebootReminder {
+    Remove-ItemProperty -Path $varRegPath -Name $varRegRReminder -ErrorAction Continue -Force
+    Remove-ItemProperty -Path $varRegPath -Name $varRegRReminderCount -ErrorAction Continue -Force
+}
+
 # Set required environment variables
+# Get environment variables for reboot criteria and configuration
 $varRRemCount = $ENV:usrRebootReminderCount
 $varRRemSched = $ENV:usrRebootReminderSched
 $varRTimeSched = $ENV:usrRebootTimeSched
 $varRRequired = $ENV:UDF_12
+$varUptimeLimit = $ENV:usrRebootUptimeLimit
+
+# Define registry path and value names for gathering reboot reminder state
 $varRegPath = "HKLM:\SOFTWARE\CentraStage\"
 $varRegRReminder = "5GNRebootReminder"
 $varRegRReminderCount = "5GNRebootReminderCount"
+
+$varCurrentUptime = (Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime
 
 if (!$varRRemCount -or !$varRRemSched) {
     Write-DRMMStatus "ERROR: Required RMM site variables not set - cannot proceed."
     Exit 0
 }
 
-if ($varRRequired -notlike "(RREQ)*") {
-    Write-DRMMStatus "OK: Device does not require a reboot"
-    Remove-ItemProperty -Path $varRegPath -Name $varRegRReminder -ErrorAction Continue -Force
-    Remove-ItemProperty -Path $varRegPath -Name $varRegRReminderCount -ErrorAction Continue -Force
-    Exit 0
+if ($varCurrentUptime.Days -eq 0) {
+    Write-DRMMStatus "OK: Device uptime is less than 24 hours, clearing reminder keys."
+    Remove-DRMMRebootReminder
+    Exit
+}
+
+If (!$varUptimeLimit) {
+    if ($varRRequired -notlike "(RREQ)*") {
+        Write-DRMMStatus "OK: Device does not require a reboot, clearing reminder keys."
+        Remove-DRMMRebootReminder
+        Exit
+    }
+} else {
+    if ($varRRequired -notlike "(RREQ)*" -and $varCurrentUptime.Days -lt $varUptimeLimit) {
+        Write-DRMMStatus "OK: Device does not require a reboot, and uptime is less than the specified limit of $varUptimeLimit days, clearing reminder keys."
+        Remove-DRMMRebootReminder
+        Exit
+    }
 }
 
 if ($varRRemCount -eq 0) {
@@ -65,6 +91,7 @@ if ($varRRemSched -match '^(\d+)([hd])$') {
     }
 } else {
     Write-DRMMStatus "BAD: Invalid format used in the site variable - review and correct."
+    # This is an error, but we cannot exit with status 1 because that would trigger a reboot
     Exit 0
 }
 
@@ -102,7 +129,6 @@ if ($timeDifference -ge $varTimeout -and $regCounterValue -ge $varRRemCount) {
     }
 
     Write-DRMMAlert $alertOut
-    #Write-DRMMAlert "REBOOT: Maximum reboot reminders reached ($regCounterValue/$varRRemCount) - performing reboot response."
     Exit 1
 }
 

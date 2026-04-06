@@ -6,7 +6,7 @@ Checks if SentinelOne is installed
 Written by Lee Mackie - 5G Networks
 
 .HISTORY
-Version 0.3 - Updated 11/09/25 - Rewokred component into simpler install logic only and moved other monitor functions to new component
+Version 0.3 - Updated 11/09/25 - Reworked component into simpler install logic only and moved other monitor functions to new component
 Version 0.2 - Updated 21/12/22 - Improved script logic
 #>
 function write-DRMMAlert ($message) {

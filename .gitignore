@@ -12,3 +12,5 @@ DRMM-WINMON-5GNMonboxWOL.ps1
 DRMM-5GNToast.ps1
 DRMM-WINMON-5GNMonitorInternetSpeed.ps1
 DRMM-WINMON-RebootReminder.ps1
+DRMM-WINMON-RebootForce.ps1
+DRMM-WINSCR-RebootReminderToast.ps1
