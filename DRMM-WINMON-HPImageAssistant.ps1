@@ -11,15 +11,19 @@ None
 
 .HISTORY
 Version 1.0 - Initial release
+Version 1.0.1 - Updated installation to 5.3.5
+Version 1.0.2 - Changed installer download directory, and also added a check for the old installer which can cause the ImageAssistant tool to
+                display a prompt. This will cause the execution to fail.
 #>
 
-$HPIADownloadUrl = "https://hpia.hpcloud.hp.com/downloads/hpia/hp-hpia-5.3.4.exe" # See here for latest download: https://ftp.ext.hp.com/pub/caps-softpaq/cmit/HPIA.html
+$HPIADownloadUrl = "https://hpia.hpcloud.hp.com/downloads/hpia/hp-hpia-5.3.5.exe" # See here for latest download: https://ftp.ext.hp.com/pub/caps-softpaq/cmit/HPIA.html
 $HPIAUserGuideUrl = "https://ftp.hp.com/pub/caps-softpaq/cmit/whitepapers/HPIAUserGuide.pdf"
-$HPIAHash = "B6E186787EBF33010C2599A69E79DA4638C8391A74E4E93D6240244FB2A560F0"
-$HPAIVersion = "5.3.4.550"
+$HPIAHash = "F73EFC953E5D3F900A69C429A7C1CC7441184F8FA4DBB063773D9ABFA0C10009" # Get-Filehash -Path <Installer> -Algorithm SHA256
+$HPAIVersion = "5.3.5.579" # Right click HPImageAssistant.exe -> Properties -> Details -> File version, this is the value to compare against to determine if an update is required
 $HPIAPath = "C:\HP\HPIA"
 $HPIAInstaller = "hpia_install.exe"
 $HPIAExecutable = "HPImageAssistant.exe"
+$TempPath = "C:\ProgramData\CentraStage\Temp"
 
 function Write-DRMMAlert ($message) {
     write-host '<-Start Result->'
@@ -95,6 +99,12 @@ try {
             Write-DRMMAlert "ERROR | HP Image Assistant executable not found after installation. Review installation process and try again."
             exitScript 1
         }
+
+        # We're doing a check for the old installer in the $HPIAPath folder as this will now cause a prompt during execution of the HP IA tool
+        if (Test-Path "$HPIAPath\$HPIAInstaller") {
+            Remove-Item "$HPIAPath\$HPIAInstaller" -Force -ErrorAction SilentlyContinue
+        }
+        Remove-Item "$TempPath\$HPIAInstaller" -Force -ErrorAction SilentlyContinue
     }
 } catch {
     Write-DRMMAlert "ERROR | Unexpected error during verification, download or extraction. Check diagnostics for details."
